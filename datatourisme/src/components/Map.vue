@@ -1,5 +1,5 @@
 <template>
-    <l-map
+  <!-- <l-map
         :center="center"
         :zoom="zoom"
         class="map"
@@ -19,14 +19,16 @@
         <l-icon ref="icon">
             <img class="marker-icon" :src="iconurl"/>
         </l-icon>
-    </l-marker>
-    </l-map>
+    </l-marker> -->
+  <button @click="loadCoordinates">Load Coordinates</button>
+  <!-- </l-map> -->
 </template>
 
 <script>
-import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
+// import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
 import 'leaflet/dist/leaflet.css';
 import {Icon} from "leaflet";
+require('isomorphic-fetch');
 
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
@@ -37,9 +39,9 @@ Icon.Default.mergeOptions({
 
 export default {
     components: {
-        LMap,
-        LTileLayer,
-        LMarker
+        // LMap,
+        // LTileLayer,
+        // LMarker
     },
     data() {
         return {
@@ -62,16 +64,46 @@ export default {
         },
         centerUpdated(center) {
             this.center = center;
-        }
-        }
+        },
+        async loadCoordinates() {
+            const rawResponse = await fetch('https://localhost:8086/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                },
+                body: JSON.stringify({
+                    query: `
+                    {
+                        poi(filters: [
+                            {isLocatedAt: {schema_address: {schema_addressLocality: {_eq: "La Rochelle"}}}}]) {
+                                total
+                                results {
+                                    _uri      
+                                    rdfs_label {
+                                        value
+                                    }
+                                    isLocatedAt {
+                                        schema_geo {
+                                        schema_latitude, schema_longitude
+                                    }
+                                }
+                            }
+                        }
+                    }`
+                })
+            })
+            console.log(rawResponse.json())
+        },
     }
+}
 </script>
 
 <style>
-    .map {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        overflow: hidden
-    }
+.map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 </style>
