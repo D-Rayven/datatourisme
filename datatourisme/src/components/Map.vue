@@ -1,5 +1,5 @@
 <template>
-  <!-- <l-map
+  <l-map
         :center="center"
         :zoom="zoom"
         class="map"
@@ -19,13 +19,12 @@
         <l-icon ref="icon">
             <img class="marker-icon" :src="iconurl"/>
         </l-icon>
-    </l-marker> -->
-  <button @click="loadCoordinates">Load Coordinates</button>
-  <!-- </l-map> -->
+    </l-marker>
+  </l-map>
 </template>
 
 <script>
-// import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
+import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
 import 'leaflet/dist/leaflet.css';
 import {Icon} from "leaflet";
 require('isomorphic-fetch');
@@ -39,23 +38,20 @@ Icon.Default.mergeOptions({
 
 export default {
     components: {
-        // LMap,
-        // LTileLayer,
-        // LMarker
+        LMap,
+        LTileLayer,
+        LMarker
     },
     data() {
         return {
             url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             center: [46.16508302168833, -1.1641140809069404],
             zoom: 12,
-            markers: [
-                {id: 1, coordinates: [ 46.16226442018983, -1.1488847613775959 ]},
-                {id: 2, coordinates: [ 46.169464863196154, -1.1263651677337871 ]},
-                {id: 3, coordinates: [ 49.102160, 6.158850 ]},
-                {id: 4, coordinates: [ 49.136010, 6.199630 ]},
-                {id: 5, coordinates: [ 49.105563, 6.182234 ]},
-            ]
+            markers: [],
         }
+    },
+    mounted() {
+        this.loadCoordinates();
     },
     methods: {
         zoomUpdated(zoom) {
@@ -66,11 +62,11 @@ export default {
             this.center = center;
         },
         async loadCoordinates() {
-            const rawResponse = await fetch('https://localhost:8086/', {
+            try {
+                const poi = await fetch('http://localhost:8086/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
                 },
                 body: JSON.stringify({
                     query: `
@@ -92,8 +88,26 @@ export default {
                         }
                     }`
                 })
-            })
-            console.log(rawResponse.json())
+                }).then(response => response.json())
+                .then(data => {
+                    return data.data.poi;
+                });
+                let list_of_markers = [];
+                let counter = 1;
+                poi.results.forEach((item) => {
+                let lat = item.isLocatedAt[0].schema_geo[0].schema_latitude[0];
+                let long = item.isLocatedAt[0].schema_geo[0].schema_longitude[0];
+                let coordinates = [lat, long];
+                list_of_markers.push({
+                    id: counter,
+                    coordinates: coordinates
+                });
+                counter++;
+                });
+                this.markers = list_of_markers;
+            } catch(e) {
+                console.log("L'erreur est ici : " + e)
+            }    
         },
     }
 }
