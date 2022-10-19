@@ -1,19 +1,24 @@
 <template>
   <div id="app">
-    <Map/>
+    <Map />
   </div>
 </template>
 
 <script>
-import Map from './components/Map.vue'
+import Map from "./components/Map.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    Map
-  }
-}
+    Map,
+  },
+};
 </script>
 
 <style>
+#app {
+  position: relative;
+  height: 750px;
+  width: 100%;
+}
 </style>
