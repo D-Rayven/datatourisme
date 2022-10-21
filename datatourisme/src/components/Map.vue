@@ -20,12 +20,27 @@
       </l-map>
     </div>
     <div id="search">
-      <input
-        type="text"
-        placeholder="Search for a location"
-        v-model="search"
-        @keyup.enter="searchLocation"
-      />
+      <fieldset>
+        <legend>Vous voyez actuellement les {{this.type}} situés à {{this.city}}</legend>
+        <input
+          type="text"
+          placeholder="Search for a location"
+          v-model="city"
+        />
+        <input
+          type="text"
+          placeholder="Search for a type"
+          v-model="type"
+        />
+        <button v-on:click="searchLocation">
+          Rechercher
+        </button>
+      </fieldset>
+    </div>
+    <div id="indication">
+      <p>Nombre de résultats : {{this.markers.length}}</p>
+      <p>Une liste des types est disponible ici : <a href="https://www.datatourisme.fr/ontology/core/">https://www.datatourisme.fr/ontology/core/</a></p>
+      <p>Par exemple, vous pouvez tester avec : Restaurant, Hotel, Beach</p>
     </div>
   </div>
 </template>
@@ -55,11 +70,14 @@ export default {
       center: [46.16508302168833, -1.1641140809069404],
       zoom: 12,
       markers: [],
-      search: "",
+      city: "",
+      type: "",
     };
   },
   mounted() {
-    this.loadCoordinates("La Rochelle");
+    this.city = "La Rochelle";
+    this.type = "Restaurant";
+    this.loadCoordinates(this.city, this.type);
   },
   methods: {
     zoomUpdated(zoom) {
@@ -68,7 +86,7 @@ export default {
     centerUpdated(center) {
       this.center = center;
     },
-    async loadCoordinates(city) {
+    async loadCoordinates(city, type) {
       try {
         const poi = await fetch("http://localhost:8086/", {
           method: "POST",
@@ -79,7 +97,9 @@ export default {
             query: `
             {
                 poi(filters: [
-                    {isLocatedAt: {schema_address: {schema_addressLocality: {_eq: "${city}"}}}}]) {
+                    {isLocatedAt: {schema_address: {schema_addressLocality: {_eq: "${city}"}}}}
+                    {rdf_type: {_in: ["https://www.datatourisme.fr/ontology/core#${type}"]}}
+                  ]) {
                         total
                         results {
                             _uri      
@@ -114,11 +134,11 @@ export default {
         });
         this.markers = list_of_markers;
       } catch (e) {
-        console.log(e);
+        console.log("ERREUR : " + e);
       }
     },
     searchLocation() {
-      this.loadCoordinates(this.search);
+      this.loadCoordinates(this.city, this.type);
     },
   },
 };
@@ -133,8 +153,18 @@ export default {
   width: 100%;
   height: 90%;
 }
-#search {
+#search  {
   position: absolute;
   bottom: 0;
+}
+#sentence {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 10px;
+}
+#indication {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: -120px;
 }
 </style>
